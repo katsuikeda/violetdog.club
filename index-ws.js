@@ -17,3 +17,33 @@ server.on("request", app);
 server.listen(3000, function () {
 	console.log("Listening on 3000");
 });
+
+/** Begin websocket */
+const WebSocketServer = require("ws").Server;
+
+// Give the connection a name, wss.
+// Attach the WebSocket to the server we created with Express.js earlier.
+const wss = new WebSocketServer({ server: server });
+
+// When the initial connection is created:
+wss.on("connection", function connection(ws) {
+	const numClients = wss.clients.size;
+	console.log("Clients connected", numClients);
+
+	wss.broadcast(`Current visitors ${numClients}`);
+
+	if (ws.readyState === ws.OPEN) {
+		ws.send("Welcome to my server");
+	}
+
+	ws.on("close", function close() {
+		wss.broadcast(`Current visitors ${numClients}`);
+		console.log("A client has disconnected");
+	});
+});
+
+wss.broadcast = function broadcast(data) {
+	wss.clients.forEach(function each(client) {
+		client.send(data);
+	});
+};
